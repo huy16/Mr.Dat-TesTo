@@ -1,0 +1,14 @@
+node_modules/
+.cache/
+1. Database/
+dist/
+uploads/*
+!uploads/.gitkeep
+temp_processing/
+output/
+backup_*/
+*.BMT
+*.jpg
+*.txt
+.DS_Store
+.env

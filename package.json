@@ -1,0 +1,61 @@
+{
+  "name": "5.-tool-testo",
+  "version": "1.0.0",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "electron-dev": "electron .",
+    "build-exe": "electron-builder",
+    "postinstall": "npx puppeteer install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.testo.tool",
+    "productName": "Users Tool Testo",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!uploads/*",
+      "!output/*",
+      "!temp_processing/*",
+      "!.git/*",
+      "!.gitignore",
+      "!Dockerfile"
+    ],
+    "extraResources": [
+      {
+        "from": ".cache/puppeteer/chrome/win64-143.0.7499.192/chrome-win64",
+        "to": "chromium"
+      }
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "form-data": "^4.0.5",
+    "multer": "^2.0.2",
+    "pdf-parse": "^2.4.5",
+    "puppeteer": "^24.35.0"
+  },
+  "devDependencies": {
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0"
+  }
+}

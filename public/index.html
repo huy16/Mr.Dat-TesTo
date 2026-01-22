@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testo Thermal Processor</title>
+    <!-- <link rel="icon" type="image/png" href="assets/cps_logo.png"> -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="background-animation"></div>
+    <div class="container">
+        <div class="card">
+            <!-- <div class="logo-header">
+                <img src="assets/cps_logo.png" alt="CPS Logo" class="app-logo">
+            </div> -->
+
+            <h1 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M12 1V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M12 21V23" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M4.22 4.22L5.64 5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M18.36 18.36L19.78 19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M1 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M21 12H23" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M4.22 19.78L5.64 18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                Solar Thermal Analyzer
+            </h1>
+            <p class="subtitle">PV System Inspection Tool</p>
+
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="input-group" style="flex: 2; min-width: 250px;">
+                    <label for="reportTitle">Project / Report Title</label>
+                    <input type="text" id="reportTitle" placeholder="e.g. Solar Farm Inspection - Zone A">
+                </div>
+                <div class="input-group" style="flex: 1; min-width: 180px;">
+                    <label for="deviceType">Device Type</label>
+                    <select id="deviceType"
+                        style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 8px; color: #333; font-size: 14px; outline: none; transition: all 0.3s ease;">
+                        <option value="solar_panel">Solar Panel</option>
+                        <option value="inverter">Inverter / Cabinet</option>
+                        <option value="cable">Cable / Connection</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="upload-area" id="drop-area">
+                <!-- Upload Icon -->
+                <svg class="upload-icon" fill="none" class="w-12 h-12" stroke="#4f46e5" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                    </path>
+                </svg>
+
+                <div class="upload-hint">Drag & Drop .BMT files</div>
+                <div class="upload-subhint">Rapid processing for Solar PV Reports</div>
+
+                <input type="file" id="fileElem" multiple accept=".BMT" class="file-input"
+                    onchange="handleFiles(this.files)">
+            </div>
+
+            <div id="file-count"></div>
+            <div id="file-list"></div>
+            <button id="uploadBtn" class="button">Generate PV Report</button>
+            <div id="status"></div>
+
+            <div class="footer-brand"></div>
+        </div>
+    </div>
+    <script src="script.js?v=4"></script>
+</body>
+
+</html>
