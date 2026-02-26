@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const DeviceClassifier = require('../../domain/services/DeviceClassifier');
 
 class GenerateThermalReport {
     constructor(bmtRepository, reportService) {
@@ -7,42 +8,30 @@ class GenerateThermalReport {
         this.reportService = reportService;
     }
 
-    async execute(files, remarks, conclusions, recommendations, tempDir, reportTitle, deviceType = "solar_panel") {
+    async execute(files, remarks, conclusions, recommendations, tempDir, reportTitle, manualCategory) {
         const thermalImages = [];
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const remark = remarks[i] || ""; // Match by index
+            const remark = remarks[i] || "";
             const conclusion = conclusions[i] || "";
             const recommendation = recommendations[i] || "";
             const bmtPath = file.path;
             try {
                 // Parse BMT to get Entity
-                // Pass originalname to keep correct file identity
                 const thermalImage = await this.bmtRepository.parse(bmtPath, tempDir, file.originalname);
-                thermalImage.remarks = remark; // Set remark
+                thermalImage.remarks = remark;
                 thermalImage.conclusion = conclusion;
                 thermalImage.recommendation = recommendation;
 
-                // Calculate Severity based on Device Type
-                let warningThreshold = 45;
-                let criticalThreshold = 65;
+                // Force user-selected device category. File might still be logged for debugging.
+                const deviceType = manualCategory;
+                thermalImage.deviceType = deviceType;
 
-                switch (deviceType) {
-                    case 'inverter':
-                        warningThreshold = 60;
-                        criticalThreshold = 80;
-                        break;
-                    case 'cable':
-                        warningThreshold = 70;
-                        criticalThreshold = 90;
-                        break;
-                    case 'solar_panel':
-                    default:
-                        warningThreshold = 45;
-                        criticalThreshold = 65;
-                        break;
-                }
+                console.log(`[Auto-Detect] ${file.originalname} → ${DeviceClassifier.getLabel(deviceType)} (max: ${thermalImage.maxTemp}°C, range: ${(parseFloat(thermalImage.maxTemp) - parseFloat(thermalImage.minTemp)).toFixed(1)}°C)`);
+
+                // Get thresholds for this specific device type
+                const { warning: warningThreshold, critical: criticalThreshold } = DeviceClassifier.getThresholds(deviceType);
 
                 const maxTemp = parseFloat(thermalImage.maxTemp);
                 if (!isNaN(maxTemp)) {
@@ -54,20 +43,35 @@ class GenerateThermalReport {
                         thermalImage.severity = "Normal";
                     }
 
-                    // Auto-generate Conclusion & Recommendation if empty
+                    // Auto-generate Conclusion & Recommendation if empty (Vietnamese)
                     if (!thermalImage.conclusion) {
                         switch (thermalImage.severity) {
                             case "Normal":
-                                thermalImage.conclusion = "Hệ thống hoạt động bình thường. Nhiệt độ nằm trong giới hạn cho phép.";
-                                if (deviceType === 'cable') thermalImage.conclusion = "Điểm đấu nối có nhiệt độ bình thường.";
+                                if (deviceType === 'cable') {
+                                    thermalImage.conclusion = "Nhiệt độ điểm đấu nối cáp nằm trong giới hạn bình thường.";
+                                } else if (deviceType === 'cabinet') {
+                                    thermalImage.conclusion = "Tủ điện/Inverter hoạt động ở nhiệt độ bình thường.";
+                                } else {
+                                    thermalImage.conclusion = "Hệ thống hoạt động bình thường. Nhiệt độ nằm trong giới hạn cho phép.";
+                                }
                                 break;
                             case "Warning":
-                                thermalImage.conclusion = "Phát hiện tăng nhiệt cục bộ. Có thể do lỗi tiếp xúc, quá tải nhẹ hoặc bóng che.";
-                                if (deviceType === 'solar_panel') thermalImage.conclusion = "Phát hiện tăng nhiệt bất thường. Có thể do bụi bẩn, bóng che hoặc lỗi nhẹ.";
+                                if (deviceType === 'cable') {
+                                    thermalImage.conclusion = "Phát hiện tăng nhiệt tại điểm đấu nối cáp. Có thể do tiếp xúc kém hoặc quá tải nhẹ.";
+                                } else if (deviceType === 'cabinet') {
+                                    thermalImage.conclusion = "Phát hiện tăng nhiệt bất thường trong tủ điện/Inverter.";
+                                } else {
+                                    thermalImage.conclusion = "Phát hiện tăng nhiệt bất thường. Có thể do bụi bẩn, bóng che hoặc lỗi nhẹ trên tấm pin.";
+                                }
                                 break;
                             case "Critical":
-                                thermalImage.conclusion = "Phát hiện lỗi quá nhiệt nghiêm trọng. Nguy cơ hư hỏng thiết bị hoặc cháy nổ.";
-                                if (deviceType === 'solar_panel') thermalImage.conclusion = "Phát hiện lỗi Hotspot nghiêm trọng trên tấm pin.";
+                                if (deviceType === 'cable') {
+                                    thermalImage.conclusion = "Quá nhiệt nghiêm trọng tại điểm đấu nối cáp. Nguy cơ hư hỏng hoặc cháy nổ.";
+                                } else if (deviceType === 'cabinet') {
+                                    thermalImage.conclusion = "Quá nhiệt nghiêm trọng trong tủ điện/Inverter. Cần xử lý ngay lập tức.";
+                                } else {
+                                    thermalImage.conclusion = "Phát hiện lỗi Hotspot nghiêm trọng trên tấm pin. Hư hỏng nặng.";
+                                }
                                 break;
                         }
                     }
@@ -75,15 +79,25 @@ class GenerateThermalReport {
                     if (!thermalImage.recommendation) {
                         switch (thermalImage.severity) {
                             case "Normal":
-                                thermalImage.recommendation = "Tiếp tục theo dõi định kỳ.";
+                                thermalImage.recommendation = "Tiếp tục theo dõi định kỳ theo lịch bảo trì.";
                                 break;
                             case "Warning":
-                                thermalImage.recommendation = "Kiểm tra vệ sinh bề mặt, siết lại điểm đấu nối và theo dõi trong lần kiểm tra tới.";
-                                if (deviceType === 'solar_panel') thermalImage.recommendation = "Vệ sinh tấm pin, kiểm tra vật cản và theo dõi thêm.";
+                                if (deviceType === 'cable') {
+                                    thermalImage.recommendation = "Kiểm tra lực siết đầu cốt, vệ sinh tiếp điểm và theo dõi trong lần kiểm tra tới.";
+                                } else if (deviceType === 'cabinet') {
+                                    thermalImage.recommendation = "Kiểm tra hệ thống thông gió, quạt làm mát và phân bổ tải.";
+                                } else {
+                                    thermalImage.recommendation = "Vệ sinh bề mặt tấm pin, kiểm tra vật cản và theo dõi thêm.";
+                                }
                                 break;
                             case "Critical":
-                                thermalImage.recommendation = "Cần kiểm tra kỹ thuật ngay lập tức! Đo dòng điện, kiểm tra lực siết hoặc thay thế.";
-                                if (deviceType === 'solar_panel') thermalImage.recommendation = "Kiểm tra kỹ thuật tại hiện trường, đo đạc lại và cân nhắc thay thế tấm pin.";
+                                if (deviceType === 'cable') {
+                                    thermalImage.recommendation = "Cần kiểm tra ngay! Đo dòng điện, kiểm tra lực siết hoặc thay thế đầu nối.";
+                                } else if (deviceType === 'cabinet') {
+                                    thermalImage.recommendation = "Cần kiểm tra ngay! Kiểm tra linh kiện bên trong và cân nhắc ngắt tải.";
+                                } else {
+                                    thermalImage.recommendation = "Kiểm tra kỹ thuật tại hiện trường, đo đạc lại và cân nhắc thay thế tấm pin.";
+                                }
                                 break;
                         }
                     }
@@ -91,15 +105,16 @@ class GenerateThermalReport {
 
                 thermalImages.push(thermalImage);
             } finally {
-                // Cleanup upload
                 if (fs.existsSync(bmtPath)) fs.unlinkSync(bmtPath);
             }
         }
 
+        // Sort by category (PV → Cable → Cabinet) then by filename
+        DeviceClassifier.sortByCategory(thermalImages);
+
         const reportName = `Report_${Date.now()}.pdf`;
         const reportPath = path.join(tempDir, reportName);
 
-        // Generate Report
         await this.reportService.generate(thermalImages, reportPath, reportTitle);
 
         return {

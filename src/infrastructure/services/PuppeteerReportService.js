@@ -2,6 +2,7 @@ const fs = require('fs');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const IReportService = require('../../domain/repositories/IReportService');
+const DeviceClassifier = require('../../domain/services/DeviceClassifier');
 
 class PuppeteerReportService extends IReportService {
     async generate(dataList, outputPath, reportTitle = "BÁO CÁO KẾT QUẢ KIỂM TRA NHIỆT") {
@@ -51,18 +52,15 @@ class PuppeteerReportService extends IReportService {
         }
         const page = await browser.newPage();
 
-        // Logo loading removed for white-label version
-        /*
         let logoBase64 = null;
         try {
-            const logoPath = path.join(__dirname, '../../../public/assets/logo.png');
+            const logoPath = path.join(__dirname, '../../../public/assets/cas_full_logo.png');
             if (fs.existsSync(logoPath)) {
                 logoBase64 = fs.readFileSync(logoPath).toString('base64');
             }
         } catch (e) {
             console.error("Logo load error", e);
         }
-        */
 
         let htmlContent = `
         <html>
@@ -71,12 +69,19 @@ class PuppeteerReportService extends IReportService {
             <style>
                 @page { size: A4; margin: 20px; }
                 body { font-family: sans-serif; padding: 0 20px; color: #000; font-size: 11px; }
-                .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; border-bottom: 2px solid #000; padding-bottom: 5px; }
-                .logo-section { width: 50%; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-                .logo-img { max-width: 100%; height: auto; max-height: 45px; margin-bottom: 2px; display: block; margin-top: 2px; }
-                .logo-sub { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-top: 0; font-weight: bold; }
-                .company-info { width: 55%; text-align: right; font-size: 9px; line-height: 1.2; }
+                .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; border-bottom: 2px solid #000; padding-bottom: 8px; opacity: 0.8; }
+                .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.15; z-index: -1; pointer-events: none; }
+                .watermark img { width: 500px; height: auto; }
+                .logo-section { width: 40%; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+                .logo-img { max-width: 180px; height: auto; max-height: 55px; margin-bottom: 3px; display: block; margin-top: 2px; }
+                .logo-sub { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; margin-top: 0; font-weight: bold; font-style: italic; }
+                .company-info { width: 58%; text-align: right; font-size: 8.5px; line-height: 1.4; color: #333; }
+                .company-name { font-weight: bold; font-size: 10px; color: #000; margin-bottom: 2px; text-transform: uppercase; }
                 .title { text-align: center; font-weight: bold; font-size: 18px; margin: 10px 0; text-decoration: none; color: #000; text-transform: uppercase; }
+                .device-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; color: #fff; margin-left: 8px; vertical-align: middle; }
+                .badge-pv { background: #16a34a; }
+                .badge-cable { background: #2563eb; }
+                .badge-cabinet { background: #d97706; }
                 
                 .meta-table { width: 100%; border-top: 2px solid #000; border-bottom: 2px solid #000; margin-bottom: 10px; font-size: 11px; }
                 .meta-table td { padding: 4px 0; vertical-align: top; }
@@ -130,6 +135,7 @@ class PuppeteerReportService extends IReportService {
                 
                 .chart-container { width: 100%; height: 120px; border: 1px solid #eee; position: relative; margin-top: 5px; padding-top: 5px; }
                 .chart-stats { text-align: right; font-size: 10px; margin-bottom: 10px; color: #333; font-weight: bold; }
+                .report-page { position: relative; overflow: visible; z-index: 0; }
                 .page-break { page-break-after: always; }
             </style>
         </head>
@@ -197,12 +203,17 @@ class PuppeteerReportService extends IReportService {
 
             htmlContent += `
             <div class="report-page ${index < dataList.length - 1 ? 'page-break' : ''}">
+                ${logoBase64 ? `<div class="watermark"><img src="data:image/png;base64,${logoBase64}" alt="Watermark"/></div>` : ''}
                 <div class="header-container">
                     <div class="logo-section">
-                        <!-- Logo removed -->
+                        ${logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" class="logo-img" alt="CAS Logo"/>` : ''}
+                        <div class="logo-sub">Automate Your Business & Free Your Mind</div>
                     </div>
                     <div class="company-info">
-                        <!-- Company info removed -->
+                        <div class="company-name">CONTROL & AUTOMATION SOLUTIONS CO.,LTD.</div>
+                        Factory: Lot C3, Road No.3, Hoa Cam Industrial Zone, Danang, Vietnam<br/>
+                        Office: 8th Floor, PeachTree Building, 388 Dien Bien Phu Street, Danang, Vietnam<br/>
+                        Phone: (+84) 236 3875 666 Fax: (+84) 236 3875 777 Website: www.cas-energy.com
                     </div>
                 </div>
 

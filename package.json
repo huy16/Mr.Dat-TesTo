@@ -4,7 +4,7 @@
   "main": "electron-main.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "dev": "node scripts/dev.js",
     "electron-dev": "electron .",
     "build-exe": "electron-builder",
     "postinstall": "npx puppeteer install",

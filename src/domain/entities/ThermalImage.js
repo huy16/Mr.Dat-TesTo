@@ -1,5 +1,5 @@
 class ThermalImage {
-    constructor(id, filename, createdAt, maxTemp, minTemp, centerTemp, reflectedTemp, emissivity, thermalImagePath, realImagePath, remarks = "", severity = "Normal", histogram = [], spots = null, conclusion = "", recommendation = "") {
+    constructor(id, filename, createdAt, maxTemp, minTemp, centerTemp, reflectedTemp, emissivity, thermalImagePath, realImagePath, remarks = "", severity = "Normal", histogram = [], spots = null, conclusion = "", recommendation = "", deviceType = "solar_panel") {
         this.id = id;
         this.filename = filename;
         this.createdAt = createdAt; // Date object
@@ -16,6 +16,7 @@ class ThermalImage {
         this.spots = spots;
         this.conclusion = conclusion;
         this.recommendation = recommendation;
+        this.deviceType = deviceType;
     }
 }
 
